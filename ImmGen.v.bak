@@ -1,0 +1,65 @@
+module ImmediateGenerator (
+    input  logic [31:0] instr,    // Instrução de 32 bits
+    input  logic [2:0]  imm_type, // Sinal de controle para selecionar o tipo de imediato
+                                  // (Largura de 3 bits pode cobrir até 8 tipos, usamos 5)
+    output logic [31:0] imm_out   // Imediato gerado e estendido para 32 bits
+);
+
+    // Definições para o seletor imm_type para clareza
+    // Estes valores devem ser definidos pela sua unidade de controle principal
+    // com base no opcode da instrução.
+    localparam IMM_TYPE_I = 3'b001;
+    localparam IMM_TYPE_S = 3'b010;
+    localparam IMM_TYPE_B = 3'b011;
+    localparam IMM_TYPE_U = 3'b100;
+    localparam IMM_TYPE_J = 3'b101;
+    // IMM_TYPE_NONE (ou R-type) poderia ser 3'b000 ou o default no case
+
+    always_comb begin
+        // Por padrão, se nenhum tipo específico for selecionado ou para tipos R,
+        // a saída pode ser zero ou um valor "don't care" se não for usada.
+        // Definir um padrão é bom para síntese.
+        imm_out = 32'b0;
+
+        case (imm_type)
+            IMM_TYPE_I: begin
+                // Imediato: instr[31:20]
+                // Estendido com sinal de instr[31]
+                imm_out = {{20{instr[31]}}, instr[31:20]};
+            end
+
+            IMM_TYPE_S: begin
+                // Imediato: instr[31:25] (imm[11:5]) e instr[11:7] (imm[4:0])
+                // Estendido com sinal de instr[31]
+                imm_out = {{20{instr[31]}}, instr[31:25], instr[11:7]};
+            end
+
+            IMM_TYPE_B: begin
+                // Imediato: instr[31] (imm[12]), instr[7] (imm[11]),
+                //           instr[30:25] (imm[10:5]), instr[11:8] (imm[4:1]),
+                //           e um bit 0 implícito (imm[0])
+                // Reordenado para formar o valor de 13 bits: {imm[12],imm[11],imm[10:5],imm[4:1],1'b0}
+                // Estendido com sinal de instr[31] (que é imm[12])
+                imm_out = {{19{instr[31]}}, instr[31], instr[7], instr[30:25], instr[11:8], 1'b0};
+            end
+
+            IMM_TYPE_U: begin
+                // Imediato: instr[31:12] (imm[31:12])
+                // Os 12 bits inferiores são zero.
+                imm_out = {instr[31:12], 12'b0};
+            end
+
+            IMM_TYPE_J: begin
+                // Imediato: instr[31] (imm[20]), instr[19:12] (imm[10:1]),
+                //           instr[20] (imm[11]), instr[30:21] (imm[19:12]),
+                //           e um bit 0 implícito (imm[0])
+                // Reordenado para formar o valor de 21 bits: {imm[20],imm[19:12],imm[11],imm[10:1],1'b0}
+                // Estendido com sinal de instr[31] (que é imm[20])
+                imm_out = {{11{instr[31]}}, instr[31], instr[19:12], instr[20], instr[30:21], 1'b0};
+            end
+
+            default: imm_out = 32'b0; // Para tipos R ou tipos não reconhecidos/não usados
+        endcase
+    end
+
+endmodule
