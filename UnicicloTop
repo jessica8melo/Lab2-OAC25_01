@@ -1,0 +1,156 @@
+module UnicicloTop (
+    input  logic         clk,
+    input  logic         rst,
+    output logic [31:0]  debug_pc     // Para debug
+    // Adicione sinal de debug/registers/testbench conforme necessário
+);
+
+    // ---- Program Counter (PC) ----
+    logic [31:0] PC, next_PC;
+
+    // ---- Instrução (da memória de instruções) ----
+    logic [31:0] instr;
+    // Memória como array
+    logic [31:0] instr_mem [0:1023];
+    initial $readmemh("de1_text.mif", instr_mem); // Lembre-se do formato correto se .mif BOOT
+    assign instr = instr_mem[PC[11:2]]; // PC word-aligned
+
+    // ---- Decode de campos da instrução ----
+    logic [6:0]  opcode   = instr[6:0];
+    logic [4:0]  rd       = instr[11:7];
+    logic [2:0]  funct3   = instr[14:12];
+    logic [4:0]  rs1      = instr[19:15];
+    logic [4:0]  rs2      = instr[24:20];
+    logic [6:0]  funct7   = instr[31:25];
+    logic        instr_30 = instr[30];
+
+    // ---- Sinais de controle ----
+    logic [1:0] ALUOpType;
+    logic RegWrite, MemRead, MemWrite, ALUSrc, Jump, BranchPCSel;
+    logic [2:0] ImmSel;
+    logic [1:0] WBDataSel;
+
+    // ---- Immediate ----
+    logic [31:0] imediato;
+
+    // ---- Banco de Registradores ----
+    logic [31:0] rs1_data, rs2_data, disp_data;
+    logic [31:0] reg_write_data;
+
+    // ---- ALU Control ----
+    logic [2:0] ALUOp;
+
+    // ---- ALU ----
+    logic [31:0] alu_in_B;
+    logic [31:0] alu_result;
+    logic alu_zero;
+
+    // ---- Memória de Dados ----
+    logic [31:0] data_mem [0:1023];
+    logic [31:0] data_read;
+
+    // ---- PC incrementado ----
+    logic [31:0] PC_plus_4;
+    assign PC_plus_4 = PC + 32'd4;
+
+    // ==== INSTÂNCIAS DOS MÓDULOS PRINCIPAIS ====
+
+    // Unidade de Controle
+    ControlUnit control_unit (
+        .opcode      (opcode),
+        .zero_flag   (alu_zero),
+        .ALUOpType   (ALUOpType),
+        .RegWrite    (RegWrite),
+        .MemRead     (MemRead),
+        .MemWrite    (MemWrite),
+        .ALUSrc      (ALUSrc),
+        .ImmSel      (ImmSel),
+        .WBDataSel   (WBDataSel),
+        .BranchPCSel (BranchPCSel),
+        .Jump        (Jump)
+    );
+
+    // Immediate Generator
+    ImmediateGenerator imm_gen (
+        .instr    (instr),
+        .imm_type (ImmSel),
+        .imm_out  (imediato)
+    );
+
+    // Register File - Ra3 usado para acesso especial (pode ser rs2 ou rd para instruções tipo SW)
+    RegisterFile regfile (
+        .clk     (clk),
+        .rst     (rst),
+        .we      (RegWrite),
+        .ra1     (rs1),
+        .ra2     (rs2),
+        .ra_disp (rd),         
+        .wa      (rd),
+        .wd      (reg_write_data),
+        .rd1     (rs1_data),
+        .rd2     (rs2_data),
+        .rd_disp (disp_data)
+    );
+
+    // ALU Control
+    ALUControl alu_control (
+        .ALUOpType (ALUOpType),
+        .funct3    (funct3),
+        .instr_30  (instr_30),
+        .ALUOp     (ALUOp)
+    );
+
+    // Seleciona segundo operando da ULA: imediato ou rs2_data
+    assign alu_in_B = (ALUSrc) ? imediato : rs2_data;
+
+    // ULA
+    ALU alu (
+        .A      (rs1_data),
+        .B      (alu_in_B),
+        .ALUOp  (ALUOp),
+        .Result (alu_result),
+        .Zero   (alu_zero)
+    );
+
+    // ==== LÓGICA DE MEMÓRIA DE DADOS UNICICLO ====
+    // Implementa MemRead e MemWrite na RAM de forma sequencial.
+    always_ff @(posedge clk) begin
+        if (MemWrite) begin
+            data_mem[alu_result[11:2]] <= rs2_data; // Escreve word-aligned
+        end
+    end
+    assign data_read = (MemRead) ? data_mem[alu_result[11:2]] : 32'b0;
+
+    // ==== MUX DE ESCREVER NO BANCO DE REGISTRADORES ====
+    always_comb begin
+        unique case (WBDataSel)
+            2'b00: reg_write_data = alu_result;      // Resultado da ULA
+            2'b01: reg_write_data = data_read;       // Dado da memória
+            2'b10: reg_write_data = PC_plus_4;       // PC+4 (JAL, JALR)
+            default: reg_write_data = alu_result;
+        endcase
+    end
+
+    // ==== LÓGICA DE CONTROLE DO PC ====
+    always_ff @(posedge clk or posedge rst) begin
+        if (rst) begin
+            PC <= 32'h0040_0000;   
+        end else begin
+            // --- MUX para controle de PC:
+            // Jump (JAL, JALR), Branch tomado, ou PC+4
+            if (Jump) begin
+                if (opcode == 7'b1100111)    // JALR
+                    PC <= (rs1_data + imediato) & ~32'b1;  // PC = rs1 + Imm & ~1
+                else
+                    PC <= PC + imediato;                   // PC = PC + Imm (JAL)
+            end else if (BranchPCSel) begin
+                PC <= PC + imediato;                       // Branch tomado (ex: BEQ)
+            end else begin
+                PC <= PC_plus_4;
+            end
+        end
+    end
+
+    assign debug_pc = PC;
+
+endmodule

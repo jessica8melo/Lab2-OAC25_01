@@ -1,0 +1,23 @@
+module tb_UnicicloTop;
+    logic clk, rst;
+    logic [31:0] debug_pc;
+
+    UnicicloTop dut (
+        .clk(clk),
+        .rst(rst),
+        .debug_pc(debug_pc)
+    );
+
+    // Clock 10ns
+    initial clk = 0;
+    always #5 clk = ~clk;
+
+    initial begin
+        rst = 1;
+        #20
+        rst = 0;
+
+        // Roda por 500 clocks
+        #5000 $finish;
+    end
+endmodule
