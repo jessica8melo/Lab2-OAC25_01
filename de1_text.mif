@@ -1,12 +1,31 @@
-DEPTH = 16384;
-WIDTH = 32;
-ADDRESS_RADIX = HEX;
-DATA_RADIX = HEX;
-CONTENT
-BEGIN
-00000000 : 100101b7;   % 5: 	li gp,0x10010000 %
-00000001 : 00018193;   % 5:  %
-00000002 : 0001a283;   % 6: 	lw t0,0(gp) %
-00000003 : 005282b3;   % 7: LOOP: 	add t0,t0,t0 %
-00000004 : ffdff06f;   % 8: 	j LOOP %
-END;
+Address     Code        Basic                        Line Source
+
+0x00400000  0x100101b7  lui x3,65552                 7        li gp,0x10010000 
+0x00400004  0x00018193  addi x3,x3,0                      
+0x00400008  0x0001a283  lw x5,0(x3)                  9        lw t0,0(gp) # t0 = 10
+0x0040000c  0x00a28313  addi x6,x5,10                12       addi t1, t0, 10    # t1 = t0 + 10 = 10 + 10 = 20
+0x00400010  0x405303b3  sub x7,x6,x5                 15       sub t2, t1, t0     # t2 = t1 - t0 = 20 - 10 = 10
+0x00400014  0x00c00513  addi x10,x0,12               18       li a0, 0xC      # a0 = 12
+0x00400018  0x00a00593  addi x11,x0,10               19       li a1, 0xA      # a1 = 10
+0x0040001c  0x00b57e33  and x28,x10,x11              20       and t3, a0, a1     # t3 = a0 AND a1 = 8
+0x00400020  0x00b56eb3  or x29,x10,x11               23       or t4, a0, a1      # t4 = a0 OR a1 = 14
+0x00400024  0x0062af33  slt x30,x5,x6                26       slt t5, t0, t1     # t5 = 1 (porque t0=10 é menor que t1=20)
+0x00400028  0x00532fb3  slt x31,x6,x5                27       slt t6, t1, t0     # t6 = 0 (porque t1=20 não é menor que t0=10)
+0x0040002c  0x0fc10617  auipc x12,64528              30       la a2, result_sw   # Carrega o endereço de result_sw em a2
+0x00400030  0xfdc60613  addi x12,x12,-36                  
+0x00400034  0x00762023  sw x7,0(x12)                 31       sw t2, 0(a2)       # Armazena t2 (10) no endereço de result_sw
+0x00400038  0x00062483  lw x9,0(x12)                 32       lw s1, 0(a2)       # s1 deve ser 10
+0x0040003c  0x00528463  beq x5,x5,8                  35       beq t0, t0, label_beq_true	
+0x00400040  0x06300913  addi x18,x0,99               36       addi s2, x0, 99    # s2 = 99 (apenas para verificar que não passou aqui)
+0x00400044  0x00100913  addi x18,x0,1                38       addi s2, x0, 1     # s2 = 1 (se o beq funcionou)
+0x00400048  0x00c000ef  jal x1,12                    41       jal ra, sub_rotina
+0x0040004c  0x03200993  addi x19,x0,50               42       addi s3, x0, 50    # s3 = 50 (para verificar que retornou)
+0x00400050  0x0200006f  jal x0,32                    43       j end_program      # Salta para o fim para não executar a sub-rotina novamente
+0x00400054  0x06400413  addi x8,x0,100               46       addi s0, x0, 100   # s0 = 100 (apenas para mostrar que entrou na sub-rotina)
+0x00400058  0x00008067  jalr x0,x1,0                 47       jr ra              # Retorna para o endereço em ra (onde o jal foi chamado)
+0x0040005c  0x00000697  auipc x13,0                  50       la a3, end_program # Carrega o endereço de end_program em a3
+0x00400060  0x01468693  addi x13,x13,20                   
+0x00400064  0x00068693  addi x13,x13,0               51       addi a3, a3, 0     # Adiciona 0 (offset) ao endereço (necessário para jalr)
+0x00400068  0x00068067  jalr x0,x13,0                52       jalr x0, a3, 0     # Salta para o endereço em a3 + 0, não salva retorno (x0)
+0x0040006c  0x3e700a13  addi x20,x0,999              53       addi s4, x0, 999   # s4 = 999 (apenas para verificar que não passou aqui)
+0x00400070  0x0000006f  jal x0,0                     57       j end_program
