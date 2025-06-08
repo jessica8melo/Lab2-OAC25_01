@@ -8,9 +8,13 @@
 
     # --- Load val1 em t0 ---
     lw t0,0(gp)           # t0 = 10
+
+    # --- Teste de add ---
+    li   t1, 5
+    add  t0, t0, t1       # t0 = t0 + 5 = 15
     
     # --- Teste de addi ---
-    addi t0, t0, 10       # t0 = t0 + 10 = 20
+    addi t0, t0, 5        # t0 = t0 + 5 = 20
 
     # --- Teste de sub ---
     # Para subtrair 10 de t0 (t0 = 20): t0 <- t0 - 10 = 10
