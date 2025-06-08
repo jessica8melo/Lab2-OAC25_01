@@ -57,16 +57,16 @@ begin
 	oREGA <= ZERO32 when (iRS1="00000") else xreg32(to_integer(unsigned(iRS1)));
 	oREGB <= ZERO32 when (iRS2="00000") else xreg32(to_integer(unsigned(iRS2)));
 	oREGD <= ZERO32 when (iDISP="00000") else xreg32(to_integer(unsigned(iDISP)));
-	process (iCLK, iRST)
+	process(iCLK, iRST)
 	begin
-		if (rising_edge(iCLK) or rising_edge(iRST)) then
-			if (iRST = '1') then 
-					xreg32 <= (others => (others => '0'));
-					xreg32(SPR) <= STACK_ADDRESS;
-					xreg32(GPR) <= DATA_ADDRESS;
-			elsif (iWREN = '1' and not(iRD = "00000")) then
-				xreg32(to_integer(unsigned(iRD))) <= iDATA;
-			end if;
-		end if;
+    	if (iRST = '1') then
+        	xreg32 <= (others => (others => '0'));
+        	xreg32(SPR) <= STACK_ADDRESS;
+        	xreg32(GPR) <= DATA_ADDRESS;
+    	elsif rising_edge(iCLK) then
+        	if (iWREN = '1' and not(iRD = "00000")) then
+            	xreg32(to_integer(unsigned(iRD))) <= iDATA;
+        	end if;
+    	end if;
 	end process;
 end rtl;
