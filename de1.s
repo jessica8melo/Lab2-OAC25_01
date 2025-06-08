@@ -1,16 +1,12 @@
 .data
-    val1: .word 10
-    val2: .word 5
     result_sw: .word 0
 
 .text
     li gp,0x10010000 
 
-    # --- Load val1 em t0 ---
-    lw t0,0(gp)           # t0 = 10
-
     # --- Teste de add ---
     li   t1, 5
+    li   t0, 10
     add  t0, t0, t1       # t0 = t0 + 5 = 15
     
     # --- Teste de addi ---
