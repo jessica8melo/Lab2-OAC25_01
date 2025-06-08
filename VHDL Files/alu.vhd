@@ -24,14 +24,9 @@ architecture Behavioral of ALU is
 
     signal result_internal : std_logic_vector(31 downto 0);
 
-signal mul, mulu : std_logic_vector(63 downto 0);
-
 begin
 
-mul <= std_logic_vector(signed(iA) * signed(iB));
-mulu <= std_logic_vector(unsigned(iA) * unsigned(iB));
-
-    process(iControl, iA, iB, mul, mulu)
+    process(iControl, iA, iB)
         variable shamt : integer range 0 to 31;
     begin
  result_internal <= ZERO32;
@@ -41,8 +36,6 @@ mulu <= std_logic_vector(unsigned(iA) * unsigned(iB));
                 result_internal <= iA and iB;
             when OPOR   =>
                 result_internal <= iA or iB;
-            when OPXOR  =>
-                result_internal <= iA xor iB;
             when OPADD  =>
                 result_internal <= std_logic_vector(signed(iA) + signed(iB));
             when OPSUB  =>
@@ -53,27 +46,6 @@ mulu <= std_logic_vector(unsigned(iA) * unsigned(iB));
                 else
                     result_internal <= (others => '0');
                 end if;
-            when OPSLTU =>
-                if unsigned(iA) < unsigned(iB) then
-                    result_internal <= (0 => '1', others => '0');
-                else
-                    result_internal <= (others => '0');
-                end if;
-            when OPSLL  =>
-                result_internal <= std_logic_vector(shift_left(signed(iA), shamt));
-            when OPSRL  =>
-                result_internal <= std_logic_vector(shift_right(unsigned(iA), shamt));
-            when OPSRA  =>
-                result_internal <= std_logic_vector(shift_right(signed(iA), shamt)); -- arithmetic shift
-            when OPLUI  =>
-                result_internal <= iB;
-when OPMUL =>
-result_internal  <= mul(31 downto 0);
-when OPMULH =>
-result_internal  <= mul(63 downto 32);
-when OPMULHU =>
-result_internal  <= mulu(63 downto 32);
-
             when others =>
                 result_internal <= ZERO;
         end case;
