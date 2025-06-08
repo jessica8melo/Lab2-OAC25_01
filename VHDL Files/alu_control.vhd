@@ -10,7 +10,7 @@ entity ALUControl is
         ALUOp   : in  STD_LOGIC_VECTOR (1 downto 0); -- Sinal da unidade de controle principal
         funct3  : in  STD_LOGIC_VECTOR (2 downto 0); -- Campo da instrução
         funct7  : in  STD_LOGIC;                     -- Bit usado para distinguir add/sub (bit 30)
-        ALUCtrl : out STD_LOGIC_VECTOR (2 downto 0)  -- Sinal para a ULA
+        ALUCtrl : out STD_LOGIC_VECTOR (4 downto 0)  -- Sinal para a ULA
     );
 end ALUControl;
 
