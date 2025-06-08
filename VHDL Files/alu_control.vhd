@@ -1,5 +1,9 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
+use work.riscv_pkg.all;
+
+-- Q1.6: o controlador da ULA seleciona qual operação a ULA deve realizar
+-- a partir do controle principal (ALUOp) e dos campos funct da instrução. 
 
 entity ALUControl is
     Port (
@@ -11,47 +15,42 @@ entity ALUControl is
 end ALUControl;
 
 architecture Behavioral of ALUControl is
-    constant ALU_ADD : STD_LOGIC_VECTOR(2 downto 0) := "000";
-    constant ALU_SUB : STD_LOGIC_VECTOR(2 downto 0) := "001";
-    constant ALU_AND : STD_LOGIC_VECTOR(2 downto 0) := "010";
-    constant ALU_OR  : STD_LOGIC_VECTOR(2 downto 0) := "011";
-    constant ALU_SLT : STD_LOGIC_VECTOR(2 downto 0) := "100";
 begin
 
     process (ALUOp, funct3, funct7)
     begin
         case ALUOp is
             when "00" => -- LW / SW sempre ADD
-                ALUCtrl <= ALU_ADD;
+                ALUCtrl <= OPADD;
             when "01" => -- BEQ usa SUB
-                ALUCtrl <= ALU_SUB;
+                ALUCtrl <= OPSUB;
             when "10" => -- R-type (depende do funct3, funct7)
                 case funct3 is
                     when "000" => -- ADD ou SUB
                         if funct7 = '1' then
-                            ALUCtrl <= ALU_SUB; -- SUB
+                            ALUCtrl <= OPSUB; -- SUB
                         else
-                            ALUCtrl <= ALU_ADD; -- ADD
+                            ALUCtrl <= OPADD; -- ADD
                         end if;
                     when "010" => -- SLT
-                        ALUCtrl <= ALU_SLT;
+                        ALUCtrl <= OPSLT;
                     when "110" => -- OR
-                        ALUCtrl <= ALU_OR;
+                        ALUCtrl <= OPOR;
                     when "111" => -- AND
-                        ALUCtrl <= ALU_AND;
+                        ALUCtrl <= OPAND;
                     when others =>
-                        ALUCtrl <= ALU_ADD; -- padrão seguro
+                        ALUCtrl <= OPADD; -- padrão seguro
                 end case;
             when "11" => -- I-type aritmético (ADDI, SLTI, ANDI, ORI)
                 case funct3 is
-                    when "000" => ALUCtrl <= ALU_ADD; -- ADDI
-                    when "010" => ALUCtrl <= ALU_SLT; -- SLTI
-                    when "110" => ALUCtrl <= ALU_OR;  -- ORI
-                    when "111" => ALUCtrl <= ALU_AND; -- ANDI
-                    when others => ALUCtrl <= ALU_ADD;
+                    when "000" => ALUCtrl <= OPADD; -- ADDI
+                    when "010" => ALUCtrl <= OPSLT; -- SLTI
+                    when "110" => ALUCtrl <= OPOR;  -- ORI
+                    when "111" => ALUCtrl <= OPAND; -- ANDI
+                    when others => ALUCtrl <= OPADD;
                 end case;
             when others => -- padrão seguro
-                ALUCtrl <= ALU_ADD;
+                ALUCtrl <= OPADD;
         end case;
     end process;
 

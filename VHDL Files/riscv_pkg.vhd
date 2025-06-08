@@ -55,6 +55,18 @@ package riscv_pkg is
   constant FUNCT3_BEQ  : std_logic_vector(2 downto 0) := "000";
   constant FUNCT3_JALR : std_logic_vector(2 downto 0) := "000";
 
+  -- Tipos de imediato
+    constant IMM_TYPE_NONE : STD_LOGIC_VECTOR(2 downto 0) := "000";
+    constant IMM_TYPE_I    : STD_LOGIC_VECTOR(2 downto 0) := "001";
+    constant IMM_TYPE_S    : STD_LOGIC_VECTOR(2 downto 0) := "010";
+    constant IMM_TYPE_B    : STD_LOGIC_VECTOR(2 downto 0) := "011";
+    constant IMM_TYPE_J    : STD_LOGIC_VECTOR(2 downto 0) := "101";
+    
+  -- WBDataSel
+    constant WB_ALU  : STD_LOGIC_VECTOR(1 downto 0) := "00";
+    constant WB_MEM  : STD_LOGIC_VECTOR(1 downto 0) := "01";
+    constant WB_PC4  : STD_LOGIC_VECTOR(1 downto 0) := "10";
+
   -- Endereços
   constant TEXT_ADDRESS  : std_logic_vector(31 downto 0) := x"0040_0000";
   constant DATA_ADDRESS  : std_logic_vector(31 downto 0) := x"1001_0000";

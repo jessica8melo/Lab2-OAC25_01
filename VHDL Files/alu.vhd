@@ -3,7 +3,7 @@ use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
 use work.riscv_pkg.all;
 
--- Q1.2: a ULA executa operações aritméticas e faz comparações/manipulações
+-- Q1.5: a ULA executa operações aritméticas e faz comparações/manipulações
 -- de bits sobre dados processados. Para tal, ela requer:
 --      Uma entrada (iControl) que seleciona a operação da ULA a partir de seu valor correspondente;
 --      Dois operandos de 32 bits (iA e iB);
